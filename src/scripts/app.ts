@@ -2100,7 +2100,7 @@ function setView(view: View, nav?: string) {
     view === 'terms'
       ? 'Terms & Conditions | Wavetify'
       : view === 'about'
-        ? 'About Wavetify — Free Music, Videos, Radio & Podcasts'
+        ? 'About Wavetify — Open-Source Free Music Player'
         : view === 'podcasts'
           ? 'Podcasts | Wavetify'
           : view === 'radio'
@@ -2109,7 +2109,7 @@ function setView(view: View, nav?: string) {
               ? 'Videos | Wavetify'
               : view === 'playlists'
                 ? 'Playlists | Wavetify'
-                : 'Wavetify — Free Music, Music Videos, Radio & Podcasts';
+                : 'Wavetify — Free Music, Videos, Radio & Podcasts Online';
   views.forEach((name) => {
     el<HTMLElement>(`view-${name}`).hidden = name !== view;
   });

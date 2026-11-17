@@ -1,11 +1,15 @@
 # Wavetify
 
-**Free online music.** A small Spotify-style web player built with Astro, streaming full tracks from Audius and Jamendo, podcast episodes, live radio and YouTube music videos — no accounts, no database, no backend.
+**A free, open-source Spotify alternative that runs in your browser.** Wavetify is a small Spotify-style web player built with Astro that streams full tracks from Audius and Jamendo, podcast episodes, live radio and YouTube music videos — no accounts, no database, no backend, no ads and no subscription.
+
+It is free software under the **MIT licence**: the complete source lives on [GitHub](https://github.com/dnysaz/wavetify), so you can read it, fork it, self-host your own copy or build something new on top of it.
 
 ![Wavetify](public/og.png)
 
 ![Astro](https://img.shields.io/badge/Astro-7.x-ff5d01?logo=astro&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
+![Free](https://img.shields.io/badge/price-free-brightgreen)
+![Open source](https://img.shields.io/badge/open%20source-yes-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
@@ -156,8 +160,13 @@ Share links use `/?t=<source>:<id>` and embeds use `/embed/?t=<source>:<id>`. A 
 - Autoplay after a reload depends on the browser's autoplay policy; if it is blocked the last song stays loaded and paused at the saved position.
 - This is a hobby project, not a licensed music service. See [/terms](src/pages/terms.astro) for the full disclaimer.
 
-## License
+## Open source and license
 
-[MIT](LICENSE) © 2026 dnysaz
+Wavetify is open source and always free to use. Clone it, run it locally, fork it or deploy your own copy:
 
-Music and metadata remain the property of their respective artists and rights holders.
+```bash
+git clone https://github.com/dnysaz/wavetify.git
+cd wavetify && npm install && npm run dev
+```
+
+Released under the [MIT license](LICENSE) © 2026 dnysaz — you may use, modify and redistribute the code, including commercially, as long as the copyright notice and licence text are kept. Wavetify's own code is MIT; music and metadata remain the property of their respective artists and rights holders, and nothing is re-hosted here.
