@@ -90,7 +90,13 @@ Create the key in [Google Cloud Console](https://console.cloud.google.com/apis/c
 
 YouTube gives 10,000 quota units per day; a search costs 100 and a video lookup costs 1. The app spends at most two searches per Videos refresh, caches the resulting list for six hours and caches per-video descriptions/counters for 24 hours.
 
-For share previews (`og:image`) to point at the absolute production URL, set `PUBLIC_SITE_URL` at build time, e.g. `PUBLIC_SITE_URL=https://wavetify.example npm run build`. Without it the relative `/og.png` is used.
+For share previews (`og:image`) to point at the absolute production URL, set `SITE_URL` at build time, e.g. `SITE_URL=https://wavetify.example npm run build`. Without it canonical links fall back to the local default in `astro.config.mjs`.
+
+All optional variables are listed in [`.env.example`](.env.example):
+
+```bash
+cp .env.example .env
+```
 
 ### Install as an app
 
