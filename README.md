@@ -2,6 +2,8 @@
 
 **Free online music.** A small Spotify-style web player built with Astro, streaming full tracks from Audius and Jamendo, podcast episodes, live radio and YouTube music videos — no accounts, no database, no backend.
 
+![Wavetify](public/og.png)
+
 ![Astro](https://img.shields.io/badge/Astro-7.x-ff5d01?logo=astro&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
