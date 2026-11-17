@@ -1,4 +1,4 @@
-import { formatTime, getTrackById, type Track } from '../lib/api';
+import { artworkAt, formatTime, getTrackById, type Track } from '../lib/api';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -40,12 +40,12 @@ function render(track: Track) {
 
   if (track.artwork) {
     const img = document.createElement('img');
-    img.src = track.artwork;
+    img.src = artworkAt(track.artwork, 'md');
     img.alt = '';
     img.loading = 'lazy';
     img.referrerPolicy = 'no-referrer';
     art.append(img);
-    backdrop.style.backgroundImage = `url(${JSON.stringify(track.artwork)})`;
+    backdrop.style.backgroundImage = `url(${JSON.stringify(artworkAt(track.artwork, 'md'))})`;
   }
 
   audio.src = track.src;

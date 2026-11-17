@@ -60,6 +60,49 @@ export type Track = {
   videoId?: string;
 };
 
+export type ArtSize = 'sm' | 'md' | 'lg';
+
+// CDNs served these covers at full size no matter how small the target element
+// is, so a 40px row thumbnail downloaded a 600px JPEG. Audius only exposes
+// 150/480/1000 (other sizes answer 400), mzstatic accepts any size.
+const APPLE_ART = { sm: 150, md: 300, lg: 600 } as const;
+const JAMENDO_ART = { sm: 200, md: 300, lg: 600 } as const;
+
+/**
+ * Rewrite a cover URL to a rendition that fits its slot. Unknown hosts are
+ * returned untouched so a new source can never break its own artwork.
+ */
+export function artworkAt(url: string, size: ArtSize): string {
+  if (!url) return url;
+
+  // Apple Podcasts / Apple Music (also used by legacy `itunes` saves).
+  const apple = url.match(/\/(\d+)x(\d+)(bb|bf|sr|cc|bb-60)\.(jpe?g|png|webp)$/);
+  if (apple) return url.replace(apple[0], `/${APPLE_ART[size]}x${APPLE_ART[size]}bb.jpg`);
+
+  // Jamendo resizes on request via the `width` query parameter.
+  if (/[?&]width=\d+/.test(url)) return url.replace(/([?&]width=)\d+/, `$1${JAMENDO_ART[size]}`);
+
+  // YouTube stills: the 16:9 thumbnails have three cheap renditions.
+  const youtube = url.match(/\/vi\/[^/]+\/(default|mqdefault|hqdefault|sddefault|maxresdefault)\.jpg$/);
+  if (youtube) {
+    const still = size === 'sm' ? 'default' : size === 'md' ? 'mqdefault' : 'hqdefault';
+    return url.replace(/\/(default|mqdefault|hqdefault|sddefault|maxresdefault)\.jpg$/, `/${still}.jpg`);
+  }
+
+  // Audius content nodes: fixed 150/480/1000 renditions, never upscale.
+  const audius = url.match(/\/(\d+)x(\d+)\.(jpe?g|png|webp)$/);
+  if (audius) {
+    const widths = [150, 480, 1000];
+    const want = size === 'sm' ? 150 : 480;
+    const have = Number(audius[1]) || 480;
+    const pick = widths.find((w) => w >= want) ?? widths[widths.length - 1];
+    const out = have < pick ? have : pick;
+    return url.replace(/\/\d+x\d+(\.(?:jpe?g|png|webp))$/, `/${out}x${out}$1`);
+  }
+
+  return url;
+}
+
 type AudiusTrack = {
   id: string;
   title: string;
@@ -189,10 +232,25 @@ function collect(...items: (InfoItem | null)[]): InfoItem[] {
   return items.filter((item): item is InfoItem => item !== null);
 }
 
+// Switching views or coming back to a tab re-asked every API for the same lists.
+// A short-lived in-memory cache makes those instant and spares Jamendo's quota.
+// Failures are never cached, and 80 entries keeps it from growing unbounded.
+const JSON_TTL = 5 * 60 * 1000;
+const JSON_MAX = 80;
+const jsonCache = new Map<string, { at: number; body: unknown }>();
+
 async function getJson<T>(url: string): Promise<T> {
+  const hit = jsonCache.get(url);
+  if (hit && Date.now() - hit.at < JSON_TTL) return hit.body as T;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
-  return (await res.json()) as T;
+  const body = (await res.json()) as T;
+  jsonCache.set(url, { at: Date.now(), body });
+  if (jsonCache.size > JSON_MAX) {
+    const oldest = jsonCache.keys().next().value;
+    if (oldest) jsonCache.delete(oldest);
+  }
+  return body;
 }
 
 // Deezer's public API does not send CORS headers, but it supports JSONP.
@@ -263,7 +321,7 @@ function fromAudius(t: AudiusTrack): Track | null {
 
 function fromJamendo(t: JamendoTrack): Track | null {
   if (!t.id || !t.name || !t.audio) return null;
-  const artwork = (t.image || t.album_image || '').replace(/width=\d+/, 'width=400');
+  const artwork = (t.image || t.album_image || '').replace(/width=\d+/, 'width=600');
   return {
     id: `jamendo:${t.id}`,
     title: t.name.trim(),

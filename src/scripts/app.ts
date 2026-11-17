@@ -1,4 +1,5 @@
 import {
+  artworkAt,
   decodeEntities,
   formatTime,
   getArtistTracks,
@@ -546,10 +547,13 @@ function paintRange(input: HTMLInputElement, percent: number) {
 function coverMarkup(track: Pick<Track, 'artwork'>, size: 'sm' | 'md' | 'lg'): string {
   const fallback = `<span class="art-fallback art-fallback-${size}" aria-hidden="true">
     <span class="art-fallback-mark">♪</span>
-    <span class="art-fallback-word">echo<span class="brand-x">X</span></span>
+    <span class="art-fallback-word">wavetify</span>
   </span>`;
   if (!track.artwork) return fallback;
-  return `${fallback}<img loading="lazy" src="${escapeHtml(track.artwork)}" alt="" data-cover />`;
+  const src = artworkAt(track.artwork, size);
+  // Intrinsic dimensions keep the slot stable while the image decodes.
+  const px = size === 'sm' ? 150 : size === 'md' ? 300 : 600;
+  return `${fallback}<img loading="lazy" decoding="async" width="${px}" height="${px}" src="${escapeHtml(src)}" alt="" data-cover />`;
 }
 
 // A playlist has no artwork of its own: build its cover from the covers of the
@@ -557,15 +561,20 @@ function coverMarkup(track: Pick<Track, 'artwork'>, size: 'sm' | 'md' | 'lg'): s
 function playlistCover(playlist: Playlist, size: 'md' | 'lg'): string {
   const fallback = `<span class="art-fallback art-fallback-${size}" aria-hidden="true">
     <span class="art-fallback-mark">♪</span>
-    <span class="art-fallback-word">echo<span class="brand-x">X</span></span>
+    <span class="art-fallback-word">wavetify</span>
   </span>`;
   const covers = playlist.tracks
     .map((track) => track.artwork)
     .filter((src): src is string => typeof src === 'string' && src.length > 0)
     .slice(0, 4);
   if (!covers.length) return fallback;
+  // Each cell is at most half the cover, so a smaller rendition is plenty.
+  const cellSize = size === 'lg' ? 'md' : 'sm';
   const cells = covers
-    .map((src) => `<img src="${escapeHtml(src)}" alt="" loading="lazy" data-cover />`)
+    .map(
+      (src) =>
+        `<img src="${escapeHtml(artworkAt(src, cellSize))}" alt="" loading="lazy" decoding="async" width="300" height="300" data-cover />`
+    )
     .join('');
   return `${fallback}<div class="pl-cover pl-cover-${covers.length}">${cells}</div>`;
 }
@@ -894,7 +903,7 @@ function renderDetailHead(track: Track) {
   void syncVideoPreview();
   void renderVideoInfo(track);
   detailArt.innerHTML = coverMarkup(track, 'lg');
-  setDetailBackdrop(track.artwork);
+  setDetailBackdrop(artworkAt(track.artwork, 'lg'));
   detailTitle.textContent = track.title;
   detailArtist.textContent = track.artist;
   detailArtistName.textContent = track.live ? track.country || track.artist : track.artist;
@@ -986,7 +995,9 @@ function renderPlaylistNowPlaying(playlist: Playlist, track: Track) {
   np.classList.add('is-playlist');
   npArt.innerHTML = playlistCover(playlist, 'lg');
   const firstCover = playlist.tracks.find((item) => !!item.artwork)?.artwork;
-  npAmbient.style.backgroundImage = firstCover ? `url(${JSON.stringify(firstCover)})` : 'none';
+  npAmbient.style.backgroundImage = firstCover
+    ? `url(${JSON.stringify(artworkAt(firstCover, 'lg'))})`
+    : 'none';
   npTitle.textContent = playlist.name;
   const count = playlist.tracks.length;
   npArtist.textContent = `${count} ${count === 1 ? 'track' : 'tracks'} · ${track.artist}`;
@@ -1025,7 +1036,9 @@ function renderNowPlaying(track: Track) {
   npTracks.innerHTML = '';
   npDetail.hidden = false;
   npArt.innerHTML = coverMarkup(track, 'lg');
-  npAmbient.style.backgroundImage = track.artwork ? `url(${JSON.stringify(track.artwork)})` : 'none';
+  npAmbient.style.backgroundImage = track.artwork
+    ? `url(${JSON.stringify(artworkAt(track.artwork, 'lg'))})`
+    : 'none';
   npTitle.textContent = track.title;
   npArtist.textContent = track.artist;
   npSource.textContent = track.live ? `${sourceMeta(track)} · on air` : sourceMeta(track);
@@ -1211,7 +1224,7 @@ function openShare(track: Track) {
   shareArt.innerHTML = '';
   if (track.artwork) {
     const img = document.createElement('img');
-    img.src = track.artwork;
+    img.src = artworkAt(track.artwork, 'sm');
     img.alt = '';
     img.referrerPolicy = 'no-referrer';
     shareArt.append(img);
@@ -1251,7 +1264,8 @@ function loadTrack(track: Track, autoplay: boolean) {
   nowTitle.textContent = queuePlaylist?.name ?? track.title;
   nowArtist.textContent = track.artist;
   nowSrc.textContent = sourceMeta(track, true);
-  nowArt.innerHTML = coverMarkup(track, 'md');
+  // The mini player art is 54px, so it needs the smallest rendition.
+  nowArt.innerHTML = coverMarkup(track, 'sm');
   nowOpen.disabled = false;
   likeBtn.disabled = false;
   fullBtn.disabled = false;
@@ -2703,7 +2717,7 @@ radioMore.addEventListener('click', () => void loadRadio(false));
 // playing (or was played last). The sharp layer only covers the top, so the
 // image reads clearly at the top and dissolves into blur further down.
 function paintHomeBackdrops() {
-  const art = (current ?? history[0]?.track)?.artwork?.replace(/"/g, '%22');
+  const art = artworkAt((current ?? history[0]?.track)?.artwork ?? '', 'lg').replace(/"/g, '%22');
   [pageBg, pageBgTop].forEach((layer) => {
     if (!art) {
       layer.style.removeProperty('--page-art');

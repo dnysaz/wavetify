@@ -21,10 +21,20 @@ const ogImage = site ? new URL('/og.png', site).toString() : '/og.png';
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="description" content={description} />
     <meta name="robots" content="index, follow, max-image-preview:large" />
+    <!-- The home view calls these APIs as soon as it hydrates: warm up DNS, TCP
+         and TLS while the HTML is still parsing. -->
+    <link rel="preconnect" href="https://api.audius.co" crossorigin />
+    <link rel="preconnect" href="https://api.jamendo.com" crossorigin />
+    <link rel="preconnect" href="https://itunes.apple.com" crossorigin />
+    <link rel="preconnect" href="https://is1-ssl.mzstatic.com" />
+    <link rel="dns-prefetch" href="https://www.googleapis.com" />
+    <link rel="dns-prefetch" href="https://de1.api.radio-browser.info" />
+    <link rel="dns-prefetch" href="https://i.ytimg.com" />
+    <link rel="dns-prefetch" href="https://usercontent.jamendo.com" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
